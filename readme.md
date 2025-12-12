@@ -6,6 +6,17 @@ A radio frequency interference (RFI) injection and analysis tool developed at ES
 
 RFInject is a Python toolkit for working with synthetic aperture radar (SAR) data, specifically designed for RFI analysis and injection. The tool provides utilities for exploring Zarr data structures, accessing SAR burst data, and analyzing RFI patterns in radar imagery.
 
+
+## Download
+
+Use the huggingface-cli and download RFInject and unzip the dataset with 7z.
+
+```bash
+    hf download RFInject/v1 --repo-type dataset --max-workers 64 --local-dir /path/to/folder
+    7z x -r -y rfinject/RFInject.zip 
+```
+
+
 ## Features
 
 - **Zarr Data Exploration**: Comprehensive tools for exploring and navigating Zarr data structures
