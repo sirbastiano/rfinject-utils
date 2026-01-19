@@ -1,5 +1,9 @@
 # RFInject
 
+<p align="center">
+  <img src="./src/rfinject.png" alt="Alt text" width="400"/>
+</p>
+
 A radio frequency interference (RFI) injection and analysis tool developed at ESA Φ-lab.
 
 ## Overview
