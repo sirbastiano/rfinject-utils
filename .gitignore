@@ -149,5 +149,4 @@ cython_debug/
 .pdm-python
 
 # Additional file types
-*.png
 *.pdm*
