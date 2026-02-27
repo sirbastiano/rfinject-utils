@@ -129,6 +129,13 @@ body::after {
   font-weight: 800;
 }
 
+.brand-logo {
+  width: 42px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.35));
+}
+
 .brand strong {
   color: var(--accent-bright);
 }
@@ -264,6 +271,17 @@ main {
   color: #e6fbff;
 }
 
+.param-list {
+  margin: 0 0 8px;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.param-name {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  color: var(--accent-soft);
+}
+
 section a,
 .card a,
 .hero a,
@@ -326,6 +344,7 @@ footer {
 @media (max-width: 700px) {
   .topbar nav { order: 2; width: 100%; }
   .theme-toggle { order: 3; }
+  .brand-logo { width: 34px; }
   .hero { padding: 18px; }
 }
 

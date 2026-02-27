@@ -3,6 +3,9 @@
 <p align="center">
   <img src="./src/rfinject.png" alt="rfinject-utils logo" width="420"/>
 </p>
+<p align="center">
+  <img src="./docs/ESAΦ-lab_WT.png" alt="ESA Φ-lab logo" width="140"/>
+</p>
 
 <p align="center">
   <a href="https://github.com/sirbastiano/rfinject-utils/blob/main/readme.md"><img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge&logo=gitbook" alt="Status"/></a>

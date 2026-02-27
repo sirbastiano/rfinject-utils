@@ -10,6 +10,7 @@
     <div class="docs-shell">
       <header class="topbar">
         <a class="brand" href="./index.html" aria-label="RFInject documentation home">
+          <img src="./ESAΦ-lab_WT.png" alt="ESA Φ-lab logo" class="brand-logo" />
           <span>RF</span>
           <strong>Inject</strong>
           <span class="muted">docs</span>
@@ -37,27 +38,62 @@
           <div class="api-grid">
             <article class="api-item">
               <h3>explore_zarr_structure(zarr_group, max_depth=3)</h3>
-              <p>Prints group/tree structure and nested attributes.</p>
+              <p>Walks a Zarr hierarchy recursively and prints each subgroup and array with shape/type metadata.</p>
+              <ul class="param-list">
+                <li><span class="param-name">zarr_group</span>: Root <code>zarr.Group</code> to inspect. Must be an in-memory Zarr group object.</li>
+                <li><span class="param-name">max_depth</span>: Maximum recursion depth for printing nested groups. Lower values keep output short, higher values show deeper structure.</li>
+              </ul>
+              <p class="muted">Returns: <code>None</code> (side-effect is console output).</p>
             </article>
             <article class="api-item">
               <h3>access_array_data(zarr_group, burst_name, array_name)</h3>
-              <p>Returns a Zarr array from one burst and data key.</p>
+              <p>Reads one data array from a burst folder, with explicit burst and array key selection.</p>
+              <ul class="param-list">
+                <li><span class="param-name">zarr_group</span>: Zarr group that contains burst children such as <code>burst_0</code>.</li>
+                <li><span class="param-name">burst_name</span>: Name of the burst group (for example <code>burst_0</code>). The function fails if this key is missing.</li>
+                <li><span class="param-name">array_name</span>: Array name inside the burst, such as <code>echo</code>, <code>rfi</code>, or <code>echo_w_rfi</code>.</li>
+              </ul>
+              <p class="muted">Returns: <code>zarr.Array</code>.</p>
             </article>
             <article class="api-item">
               <h3>get_array_slice(array, slice_params=None)</h3>
-              <p>Extracts an inspection window; defaults to a 10x10 corner slice.</p>
+              <p>Extracts a NumPy slice from a Zarr array for a quick visual or numeric inspection.</p>
+              <ul class="param-list">
+                <li><span class="param-name">array</span>: Input Zarr array to slice.</li>
+                <li><span class="param-name">slice_params</span>: Optional tuple of Python slices or indices. If omitted, the function returns:
+                  <ul>
+                    <li>first 10x10 block for 2D arrays</li>
+                    <li>first 10x10 block and first plane for 3D arrays</li>
+                    <li>all dims sliced as <code>slice(0, 10)</code> for higher dimensions</li>
+                  </ul>
+                </li>
+              </ul>
+              <p class="muted">Returns: <code>np.ndarray</code> containing the selected window.</p>
             </article>
             <article class="api-item">
               <h3>get_burst_info(zarr_group)</h3>
-              <p>Returns dictionary metadata for burst groups including shapes and memory footprint.</p>
+              <p>Collects per-burst statistics (shape, dtype, chunking, and estimated memory footprint).</p>
+              <ul class="param-list">
+                <li><span class="param-name">zarr_group</span>: Root group that contains one or more <code>burst_*</code> children.</li>
+              </ul>
+              <p class="muted">Returns: <code>Dict[str, Dict[str, Any]]</code> keyed by burst name.</p>
             </article>
             <article class="api-item">
               <h3>access_attributes(zarr_item, path=None)</h3>
-              <p>Reads attrs from root or any nested path.</p>
+              <p>Reads metadata attributes from a target object in the hierarchy, optionally navigating to a child path first.</p>
+              <ul class="param-list">
+                <li><span class="param-name">zarr_item</span>: Root <code>zarr.Group</code> (or array-like) from which navigation starts.</li>
+                <li><span class="param-name">path</span>: Optional slash-separated path (e.g. <code>burst_0/echo</code>). If omitted, reads only the starting item.</li>
+              </ul>
+              <p class="muted">Returns: a plain <code>dict</code> of attributes; empty dictionary if none exist.</p>
             </article>
             <article class="api-item">
               <h3>explore_all_attributes(zarr_group)</h3>
-              <p>Walks the hierarchy and returns all discovered attrs in dictionary form.</p>
+              <p>Traverses root, burst, and burst-array nodes and extracts all available attributes in a single pass.</p>
+              <ul class="param-list">
+                <li><span class="param-name">zarr_group</span>: Root Zarr group containing SAR burst groups and arrays.</li>
+              </ul>
+              <p class="muted">Returns: nested dictionary keyed by element path (for example <code>root</code>, <code>burst_0</code>, <code>burst_0/echo</code>).</p>
             </article>
           </div>
         </section>
@@ -67,11 +103,28 @@
           <div class="api-grid">
             <article class="api-item">
               <h3>plot_complex_array(array, title='Complex Array Visualization', figsize=(15,5))</h3>
-              <p>Plots magnitude, phase, and real components for complex arrays.</p>
+              <p>Creates a 3-panel figure: magnitude, phase, and real-part views for a complex-valued array.</p>
+              <ul class="param-list">
+                <li><span class="param-name">array</span>: Complex <code>np.ndarray</code> or coercible array-like input.</li>
+                <li><span class="param-name">title</span>: Figure title shown above the three plots.</li>
+                <li><span class="param-name">figsize</span>: Tuple <code>(width, height)</code> in inches passed to Matplotlib.</li>
+              </ul>
+              <p class="muted">Returns: <code>None</code> (renders and displays the plot).</p>
             </article>
             <article class="api-item">
               <h3>plot_magnitude(array, title='Magnitude', ...)</h3>
-              <p>Visualize magnitude values with optional dB scaling, normalization, and save-to-file.</p>
+              <p>Draws one magnitude plot with normalization, optional dB conversion, color-range control, and optional file export.</p>
+              <ul class="param-list">
+                <li><span class="param-name">array</span>: Complex input array.</li>
+                <li><span class="param-name">title</span>: Panel title text.</li>
+                <li><span class="param-name">figsize</span>: Figure size in inches, as a tuple.</li>
+                <li><span class="param-name">normalize</span>: If true, scales magnitude by its maximum value before display.</li>
+                <li><span class="param-name">db_scale</span>: If true, converts to dB using <code>20*log10()</code> and changes colorbar label.</li>
+                <li><span class="param-name">vmin</span>: Optional minimum color limit. Useful for clipping low values.</li>
+                <li><span class="param-name">vmax</span>: Optional maximum color limit. Useful for clipping high values.</li>
+                <li><span class="param-name">savefig</span>: Optional output path. If set, saves the figure at <code>dpi=300</code>.</li>
+              </ul>
+              <p class="muted">Returns: <code>None</code> (renders, and optionally saves the figure).</p>
             </article>
           </div>
         </section>
@@ -81,15 +134,34 @@
           <div class="api-grid">
             <article class="api-item">
               <h3>train_model(...)</h3>
-              <p>Training entry point with callbacks, checkpoints, and dataloaders.</p>
+              <p>End-to-end training entry point that builds default data module/callbacks and runs fit + test.</p>
+              <ul class="param-list">
+                <li><span class="param-name">model</span>: Optional <code>pl.LightningModule</code>. If omitted, the trainer creates a default <code>MyModel</code>.</li>
+                <li><span class="param-name">data_module</span>: Optional <code>pl.LightningDataModule</code>. If omitted, a default one is created with <code>./data</code>.</li>
+                <li><span class="param-name">max_epochs</span>: Maximum training epochs passed directly to <code>pl.Trainer</code>.</li>
+                <li><span class="param-name">accelerator</span>: Hardware backend string passed to Lightning (commonly <code>cpu</code> or <code>gpu</code>).</li>
+                <li><span class="param-name">devices</span>: Number of accelerator devices to allocate.</li>
+                <li><span class="param-name">log_dir</span>: Root directory for the TensorBoard logger.</li>
+                <li><span class="param-name">checkpoint_dir</span>: Directory where <code>ModelCheckpoint</code> files are stored.</li>
+              </ul>
+              <p class="muted">Returns: the trained model instance.</p>
             </article>
             <article class="api-item">
               <h3>run_inference(model_checkpoint_path, data_module)</h3>
-              <p>Loads a checkpoint and runs inference using a Lightning-style data module.</p>
+              <p>Loads a trained checkpoint and runs prediction with a provided datamodule.</p>
+              <ul class="param-list">
+                <li><span class="param-name">model_checkpoint_path</span>: Filesystem path to a saved <code>.ckpt</code> checkpoint.</li>
+                <li><span class="param-name">data_module</span>: Initialized data module exposing prediction dataloader(s).</li>
+              </ul>
+              <p class="muted">Returns: predictions returned by <code>trainer.predict()</code>.</p>
             </article>
             <article class="api-item">
               <h3>setup_callbacks(checkpoint_dir='./checkpoints')</h3>
-              <p>Builds model checkpoints and learning-rate monitoring callbacks.</p>
+              <p>Builds standard Lightning callbacks for checkpointing, early stopping, and learning-rate logging.</p>
+              <ul class="param-list">
+                <li><span class="param-name">checkpoint_dir</span>: Directory passed to <code>ModelCheckpoint</code>.</li>
+              </ul>
+              <p class="muted">Returns: callback list used by <code>train_model()</code>.</p>
             </article>
           </div>
         </section>
