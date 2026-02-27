@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFInject Docs · Visualization</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="docs-shell">
+      <header class="topbar">
+        <a class="brand" href="./index.html" aria-label="RFInject documentation home">
+          <span>RF</span>
+          <strong>Inject</strong>
+          <span class="muted">docs</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="./index.html">Home</a>
+          <a href="./getting-started.html">Getting started</a>
+          <a href="./api-reference.html">API reference</a>
+          <a href="./visualization.html">Visualization</a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cycle color theme">
+          Switch to cool
+        </button>
+      </header>
+
+      <main>
+        <section class="hero">
+          <p class="eyebrow">Visualization</p>
+          <h1>Plot helpers for inspection and debugging</h1>
+          <p>Use the plotting API for quick visual checks before model training.</p>
+        </section>
+
+        <section class="card" id="visualization-examples">
+          <h2 class="section-title">Complex array overview</h2>
+          <pre><code>import numpy as np
+from rfinject.viz import plot_complex_array
+
+sample = np.random.randn(256, 256) + 1j * np.random.randn(256, 256)
+plot_complex_array(sample, title="Synthetic complex sample")</code></pre>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Magnitude focused plot</h2>
+          <pre><code>from rfinject.viz import plot_magnitude
+
+plot_magnitude(
+  sample,
+  title="Burst magnitude",
+  normalize=True,
+  db_scale=True,
+  savefig="magnitude.png"
+)</code></pre>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Tip</h2>
+          <p class="muted">
+            Feed small slices first while tuning pipeline parameters; use <span class="highlight">get_array_slice()</span>
+            for quick checks before rendering full scenes.
+          </p>
+        </section>
+      </main>
+
+      <footer>Developed at ESA Φ-lab · Contact: roberto.delprete@esa.int</footer>
+    </div>
+
+    <script src="./main.js" defer></script>
+  </body>
+</html>

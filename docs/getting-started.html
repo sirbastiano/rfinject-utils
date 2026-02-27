@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFInject Docs · Getting started</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="docs-shell">
+      <header class="topbar">
+        <a class="brand" href="./index.html" aria-label="RFInject documentation home">
+          <span>RF</span>
+          <strong>Inject</strong>
+          <span class="muted">docs</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="./index.html">Home</a>
+          <a href="./getting-started.html">Getting started</a>
+          <a href="./api-reference.html">API reference</a>
+          <a href="./visualization.html">Visualization</a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cycle color theme">
+          Switch to cool
+        </button>
+      </header>
+
+      <main>
+        <section class="hero">
+          <p class="eyebrow">Getting started</p>
+          <h1>From zero to a first RFInject workflow</h1>
+          <p>
+            This page includes the shortest practical path for local setup and first exploratory runs with your Zarr
+            datasets.
+          </p>
+        </section>
+
+        <section class="card" id="install">
+          <h2 class="section-title">1) Install dependencies</h2>
+          <pre><code>curl -sSL https://pdm-project.org/install-pdm.py | python3 -
+pdm install
+pdm install -G jupyter_env
+pdm install -G viz
+pdm install -G docs</code></pre>
+        </section>
+
+        <section class="card" id="quick-run">
+          <h2 class="section-title">2) Inspect a burst group</h2>
+          <pre><code>import zarr
+
+from rfinject.utils import (
+  explore_zarr_structure,
+  get_burst_info,
+  access_attributes,
+)
+
+zarr_data = zarr.open("path/to/your/data.zarr", mode="r")
+explore_zarr_structure(zarr_data, max_depth=3)
+burst_info = get_burst_info(zarr_data)
+attrs = access_attributes(zarr_data, "burst_0")</code></pre>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">3) Download a sample dataset</h2>
+          <pre><code>hf download RFInject/v1 --repo-type dataset --max-workers 64 --local-dir /path/to/folder
+7z x -r -y /path/to/folder/RFInject.zip</code></pre>
+        </section>
+
+        <section class="card" id="next">
+          <h2 class="section-title">4) Run your first script</h2>
+          <p>Store helper code in a small Python script and run with PDM to keep the environment locked.</p>
+          <pre><code>pdm run python your_script.py</code></pre>
+          <p class="muted">Need full API details? Go to <a href="./api-reference.html">API reference</a>.</p>
+        </section>
+      </main>
+
+      <footer>Developed at ESA Φ-lab · Contact: roberto.delprete@esa.int</footer>
+    </div>
+
+    <script src="./main.js" defer></script>
+  </body>
+</html>

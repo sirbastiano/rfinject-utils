@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RFInject Docs · API reference</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="docs-shell">
+      <header class="topbar">
+        <a class="brand" href="./index.html" aria-label="RFInject documentation home">
+          <span>RF</span>
+          <strong>Inject</strong>
+          <span class="muted">docs</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="./index.html">Home</a>
+          <a href="./getting-started.html">Getting started</a>
+          <a href="./api-reference.html">API reference</a>
+          <a href="./visualization.html">Visualization</a>
+        </nav>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cycle color theme">
+          Switch to cool
+        </button>
+      </header>
+
+      <main>
+        <section class="hero">
+          <p class="eyebrow">API reference</p>
+          <h1>Core modules and helpers</h1>
+          <p>Focus on practical entry points you will call in scripts and notebooks.</p>
+        </section>
+
+        <section class="card" id="core-api">
+          <h2 class="section-title">rfinject.utils</h2>
+          <div class="api-grid">
+            <article class="api-item">
+              <h3>explore_zarr_structure(zarr_group, max_depth=3)</h3>
+              <p>Prints group/tree structure and nested attributes.</p>
+            </article>
+            <article class="api-item">
+              <h3>access_array_data(zarr_group, burst_name, array_name)</h3>
+              <p>Returns a Zarr array from one burst and data key.</p>
+            </article>
+            <article class="api-item">
+              <h3>get_array_slice(array, slice_params=None)</h3>
+              <p>Extracts an inspection window; defaults to a 10x10 corner slice.</p>
+            </article>
+            <article class="api-item">
+              <h3>get_burst_info(zarr_group)</h3>
+              <p>Returns dictionary metadata for burst groups including shapes and memory footprint.</p>
+            </article>
+            <article class="api-item">
+              <h3>access_attributes(zarr_item, path=None)</h3>
+              <p>Reads attrs from root or any nested path.</p>
+            </article>
+            <article class="api-item">
+              <h3>explore_all_attributes(zarr_group)</h3>
+              <p>Walks the hierarchy and returns all discovered attrs in dictionary form.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">rfinject.viz</h2>
+          <div class="api-grid">
+            <article class="api-item">
+              <h3>plot_complex_array(array, title='Complex Array Visualization', figsize=(15,5))</h3>
+              <p>Plots magnitude, phase, and real components for complex arrays.</p>
+            </article>
+            <article class="api-item">
+              <h3>plot_magnitude(array, title='Magnitude', ...)</h3>
+              <p>Visualize magnitude values with optional dB scaling, normalization, and save-to-file.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">rfinject.trainer</h2>
+          <div class="api-grid">
+            <article class="api-item">
+              <h3>train_model(...)</h3>
+              <p>Training entry point with callbacks, checkpoints, and dataloaders.</p>
+            </article>
+            <article class="api-item">
+              <h3>run_inference(model_checkpoint_path, data_module)</h3>
+              <p>Loads a checkpoint and runs inference using a Lightning-style data module.</p>
+            </article>
+            <article class="api-item">
+              <h3>setup_callbacks(checkpoint_dir='./checkpoints')</h3>
+              <p>Builds model checkpoints and learning-rate monitoring callbacks.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Example call</h2>
+          <pre><code>from rfinject.utils import access_attributes, get_burst_info
+
+burst_info = get_burst_info(zarr_data)
+metadata = access_attributes(zarr_data, "burst_0/echo")
+print(len(burst_info), list(metadata.keys())[:5])</code></pre>
+        </section>
+      </main>
+
+      <footer>Developed at ESA Φ-lab · Contact: roberto.delprete@esa.int</footer>
+    </div>
+
+    <script src="./main.js" defer></script>
+  </body>
+</html>

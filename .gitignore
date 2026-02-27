@@ -86,6 +86,40 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# AI / ML artifacts
+**/*.ckpt
+*.ckpt
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
+*.pb
+*.pbtxt
+*.tflite
+*.keras
+*.npz
+*.pkl
+*.pickle
+*.joblib
+*.safetensors
+*.gguf
+*.ggml
+*.bin
+weights/
+models/
+checkpoints/
+runs/
+outputs/
+wandb/
+mlruns/
+tensorboard/
+lightning_logs/
+*.npy
+.codex
+.agents
+AGENTS.md
+
 # IPython
 profile_default/
 ipython_config.py
