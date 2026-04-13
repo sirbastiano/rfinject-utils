@@ -7,12 +7,14 @@ authors = [
 ]
 
 dependencies = [
+  "numpy",
   "zarr>3",
   "folium",
   "pandas",
   "scipy",
   "matplotlib",
   "jupyter",
+  "huggingface-hub>=1.5.0",
 ]
 
 requires-python = ">=3.12"
@@ -28,7 +30,6 @@ jupyter_env = [
 ais = [
   "shapely>=2.0.0",  # Use 2.x for Python 3.12 compatibility
   "pyarrow>=21.0.0", 
-  "huggingface-hub>=0.35.0", 
 ]
 viz = [
   "leafmap[maplibre]>=0.52.2",

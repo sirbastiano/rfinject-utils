@@ -1,10 +1,322 @@
 # Copyright (c) Roberto Del Prete. All rights reserved.
 
-import sys
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from urllib.parse import urlparse
+
 import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
-import matplotlib.pyplot as plt
 import zarr
+from typing import Any, Dict, Optional, Tuple
+
+
+DEFAULT_HF_BUCKET_ID = "ESA-philab/RFInject-v1-L0"
+DEFAULT_CACHE_ENV_VAR = "RFINJECT_CACHE_DIR"
+
+
+def _build_hf_api(api: Any = None, token: Optional[str] = None) -> Any:
+    if api is not None:
+        return api
+
+    try:
+        from huggingface_hub import HfApi
+    except ImportError as exc:
+        raise ImportError(
+            "Bucket support requires huggingface-hub>=1.5.0. "
+            "Install the project dependencies again."
+        ) from exc
+
+    return HfApi(token=token)
+
+
+def parse_hf_bucket_reference(bucket: str) -> str:
+    """Normalize a bucket reference to ``owner/name`` format.
+
+    Supports bucket IDs directly (``owner/name``), prefixed paths
+    (``buckets/owner/name`` or ``hf://buckets/owner/name``), and public
+    bucket URLs such as
+    ``https://huggingface.co/buckets/ESA-philab/RFInject-v1-L0``.
+    """
+    if not bucket or not bucket.strip():
+        raise ValueError("Bucket reference cannot be empty.")
+
+    bucket = bucket.strip()
+    if bucket.startswith("hf://"):
+        bucket = bucket[5:]
+
+    if bucket.startswith(("https://", "http://")):
+        parts = [part for part in urlparse(bucket).path.split("/") if part]
+        if len(parts) < 3 or parts[0] != "buckets":
+            raise ValueError(
+                "Bucket URLs must look like https://huggingface.co/buckets/<owner>/<name>."
+            )
+        return "/".join(parts[1:3])
+
+    if bucket.startswith("buckets/"):
+        bucket = bucket[len("buckets/") :]
+
+    parts = [part for part in bucket.split("/") if part]
+    if len(parts) < 2:
+        raise ValueError("Bucket references must look like '<owner>/<name>'.")
+
+    return "/".join(parts[:2])
+
+
+def _normalize_hf_remote_path(remote_path: str) -> str:
+    if not remote_path or not remote_path.strip():
+        raise ValueError("Remote path cannot be empty.")
+
+    remote_path = remote_path.strip()
+    if remote_path.startswith("hf://"):
+        remote_path = remote_path[5:]
+
+    if remote_path.startswith(("https://", "http://")):
+        parts = [part for part in urlparse(remote_path).path.split("/") if part]
+        if len(parts) < 4 or parts[0] != "buckets":
+            raise ValueError(
+                "Bucket object URLs must include a path after /buckets/<owner>/<name>/."
+            )
+        return "/".join(parts[3:])
+
+    if remote_path.startswith("buckets/"):
+        parts = [part for part in remote_path.split("/") if part]
+        if len(parts) < 4:
+            raise ValueError(
+                "Bucket object references must include a path after buckets/<owner>/<name>/."
+            )
+        return "/".join(parts[3:])
+
+    return remote_path.lstrip("/")
+
+
+def _resolve_bucket_local_root(bucket_id: str, local_dir: Optional[os.PathLike | str]) -> Path:
+    if local_dir is not None:
+        root = Path(local_dir).expanduser()
+    else:
+        root = Path(
+            os.environ.get(
+                DEFAULT_CACHE_ENV_VAR,
+                str(Path.home() / ".cache" / "rfinject" / "buckets"),
+            )
+        )
+        root = root / bucket_id
+
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _download_bucket_entries(
+    bucket_id: str,
+    entries: list[Any],
+    destination_root: Path,
+    *,
+    api: Any,
+    token: Optional[str] = None,
+    raise_on_missing_files: bool = True,
+) -> list[Path]:
+    local_paths: list[Path] = []
+    file_pairs = []
+
+    for entry in entries:
+        remote_path = getattr(entry, "path", str(entry))
+        local_path = destination_root / remote_path
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        file_pairs.append((entry, local_path))
+        local_paths.append(local_path)
+
+    api.download_bucket_files(
+        bucket_id,
+        file_pairs,
+        raise_on_missing_files=raise_on_missing_files,
+        token=token,
+    )
+    return local_paths
+
+
+def get_hf_bucket_info(bucket: str = DEFAULT_HF_BUCKET_ID, *, token: Optional[str] = None, api: Any = None) -> Any:
+    """Return metadata about a Hugging Face bucket."""
+    bucket_id = parse_hf_bucket_reference(bucket)
+    api = _build_hf_api(api=api, token=token)
+    return api.bucket_info(bucket_id, token=token)
+
+
+def list_hf_bucket_files(
+    bucket: str = DEFAULT_HF_BUCKET_ID,
+    *,
+    prefix: Optional[str] = None,
+    recursive: bool = False,
+    suffix: Optional[str] = None,
+    limit: Optional[int] = None,
+    token: Optional[str] = None,
+    api: Any = None,
+) -> list[Any]:
+    """List bucket entries, optionally filtering by prefix/suffix."""
+    bucket_id = parse_hf_bucket_reference(bucket)
+    api = _build_hf_api(api=api, token=token)
+    normalized_prefix = _normalize_hf_remote_path(prefix) if prefix else None
+
+    entries = []
+    for entry in api.list_bucket_tree(
+        bucket_id,
+        prefix=normalized_prefix,
+        recursive=recursive,
+        token=token,
+    ):
+        if suffix is not None and not entry.path.endswith(suffix):
+            continue
+
+        entries.append(entry)
+        if limit is not None and len(entries) >= limit:
+            break
+
+    return entries
+
+
+def list_hf_bucket_zarrs(
+    bucket: str = DEFAULT_HF_BUCKET_ID,
+    *,
+    limit: Optional[int] = None,
+    token: Optional[str] = None,
+    api: Any = None,
+) -> list[str]:
+    """List top-level Zarr products available in a bucket."""
+    entries = list_hf_bucket_files(
+        bucket,
+        recursive=False,
+        token=token,
+        api=api,
+    )
+
+    zarr_paths = [entry.path.rstrip("/") for entry in entries if entry.path.endswith(".zarr")]
+    if limit is not None:
+        return zarr_paths[:limit]
+    return zarr_paths
+
+
+def download_hf_bucket_path(
+    bucket: str = DEFAULT_HF_BUCKET_ID,
+    remote_path: str = "",
+    local_dir: Optional[os.PathLike | str] = None,
+    *,
+    recursive: bool = True,
+    token: Optional[str] = None,
+    api: Any = None,
+) -> list[Path]:
+    """Download a file or a directory-like prefix from a bucket.
+
+    Files are mirrored under ``local_dir`` preserving their relative paths in the
+    bucket. If ``local_dir`` is omitted, a cache directory under
+    ``~/.cache/rfinject/buckets/<owner>/<bucket>`` is used.
+    """
+    bucket_id = parse_hf_bucket_reference(bucket)
+    api = _build_hf_api(api=api, token=token)
+    remote_path = _normalize_hf_remote_path(remote_path)
+    destination_root = _resolve_bucket_local_root(bucket_id, local_dir)
+
+    exact_file_matches = list(api.get_bucket_paths_info(bucket_id, [remote_path], token=token))
+    if exact_file_matches:
+        return _download_bucket_entries(
+            bucket_id,
+            exact_file_matches,
+            destination_root,
+            api=api,
+            token=token,
+        )
+
+    prefix = remote_path.rstrip("/") + "/"
+    entries = list_hf_bucket_files(
+        bucket_id,
+        prefix=prefix,
+        recursive=recursive,
+        token=token,
+        api=api,
+    )
+    if not entries:
+        raise FileNotFoundError(
+            f"'{remote_path}' was not found in bucket '{bucket_id}'."
+        )
+
+    return _download_bucket_entries(
+        bucket_id,
+        entries,
+        destination_root,
+        api=api,
+        token=token,
+    )
+
+
+def sync_hf_bucket_zarr(
+    bucket: str = DEFAULT_HF_BUCKET_ID,
+    zarr_path: str = "",
+    local_dir: Optional[os.PathLike | str] = None,
+    *,
+    metadata_only: bool = False,
+    token: Optional[str] = None,
+    api: Any = None,
+) -> Path:
+    """Mirror a bucket-hosted Zarr store locally and return its local path.
+
+    When ``metadata_only=True``, only ``zarr.json`` files are downloaded. This is
+    enough to inspect hierarchy, attributes, shapes, and chunk metadata for the
+    RFInject Zarr v3 products hosted in the bucket.
+    """
+    bucket_id = parse_hf_bucket_reference(bucket)
+    api = _build_hf_api(api=api, token=token)
+    normalized_zarr_path = _normalize_hf_remote_path(zarr_path).rstrip("/")
+    prefix = normalized_zarr_path + "/"
+
+    entries = list_hf_bucket_files(
+        bucket_id,
+        prefix=prefix,
+        recursive=True,
+        token=token,
+        api=api,
+    )
+    if metadata_only:
+        entries = [entry for entry in entries if entry.path.endswith("zarr.json")]
+
+    if not entries:
+        raise FileNotFoundError(
+            f"Zarr path '{normalized_zarr_path}' was not found in bucket '{bucket_id}'."
+        )
+
+    destination_root = _resolve_bucket_local_root(bucket_id, local_dir)
+    _download_bucket_entries(
+        bucket_id,
+        entries,
+        destination_root,
+        api=api,
+        token=token,
+    )
+    return destination_root / normalized_zarr_path
+
+
+def open_hf_bucket_zarr(
+    bucket: str = DEFAULT_HF_BUCKET_ID,
+    zarr_path: str = "",
+    local_dir: Optional[os.PathLike | str] = None,
+    *,
+    metadata_only: bool = True,
+    token: Optional[str] = None,
+    api: Any = None,
+    mode: str = "r",
+) -> zarr.Group:
+    """Open a bucket-hosted Zarr store through a local mirror.
+
+    The bucket is treated as the source of truth while the local filesystem is a
+    cache/mirror used by Zarr. This avoids relying on repository-style
+    ``hf://`` filesystem semantics, which do not apply to buckets today.
+    """
+    local_path = sync_hf_bucket_zarr(
+        bucket=bucket,
+        zarr_path=zarr_path,
+        local_dir=local_dir,
+        metadata_only=metadata_only,
+        token=token,
+        api=api,
+    )
+    return zarr.open_group(str(local_path), mode=mode)
 
 
 
@@ -178,4 +490,21 @@ def explore_all_attributes(zarr_group: zarr.Group) -> Dict[str, Dict[str, Any]]:
     
     return all_attrs
 
+
+__all__ = [
+    "DEFAULT_HF_BUCKET_ID",
+    "access_array_data",
+    "access_attributes",
+    "download_hf_bucket_path",
+    "explore_all_attributes",
+    "explore_zarr_structure",
+    "get_array_slice",
+    "get_burst_info",
+    "get_hf_bucket_info",
+    "list_hf_bucket_files",
+    "list_hf_bucket_zarrs",
+    "open_hf_bucket_zarr",
+    "parse_hf_bucket_reference",
+    "sync_hf_bucket_zarr",
+]
 

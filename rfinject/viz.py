@@ -1,9 +1,8 @@
 
 # Copyright (c) Roberto Del Prete. All rights reserved.
 
-import sys
 import numpy as np
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 
 

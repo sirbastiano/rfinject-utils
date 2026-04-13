@@ -5,21 +5,47 @@
 This script demonstrates a complete training pipeline using PyTorch Lightning.
 It includes data loading, model definition, training, validation, and testing.
 """
+from __future__ import annotations
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset, random_split
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
+from typing import Optional
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch.utils.data import DataLoader, Dataset, random_split
+    import pytorch_lightning as pl
+    from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+    from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
+    _TRAINING_IMPORT_ERROR: Optional[Exception] = None
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised in lightweight environments
+    torch = nn = F = None
+    DataLoader = Dataset = random_split = None
+    pl = None
+    ModelCheckpoint = EarlyStopping = LearningRateMonitor = None
+    TensorBoardLogger = WandbLogger = None
+    _TRAINING_IMPORT_ERROR = exc
+
+
+def _require_training_dependencies() -> None:
+    """Raise a clear error when optional ML dependencies are unavailable."""
+    if _TRAINING_IMPORT_ERROR is not None:
+        raise ModuleNotFoundError(
+            "Optional training dependencies are not installed. "
+            "Install PyTorch and PyTorch Lightning to use rfinject.trainer."
+        ) from _TRAINING_IMPORT_ERROR
+
+
+DatasetBase = Dataset if Dataset is not None else object
+LightningModuleBase = pl.LightningModule if pl is not None else object
+LightningDataModuleBase = pl.LightningDataModule if pl is not None else object
 
 
 # ============================================================================
 # 1. DATASET DEFINITION
 # ============================================================================
 
-class CustomDataset(Dataset):
+class CustomDataset(DatasetBase):
     """Custom dataset example.
     
     Args:
@@ -28,6 +54,7 @@ class CustomDataset(Dataset):
     """
     
     def __init__(self, data_path, transform=None):
+        _require_training_dependencies()
         super().__init__()
         self.data_path = data_path
         self.transform = transform
@@ -36,8 +63,7 @@ class CustomDataset(Dataset):
     
     def _load_data(self):
         """Load and preprocess data."""
-        # Implement data loading logic
-        pass
+        raise NotImplementedError("Implement CustomDataset._load_data() for your project data.")
     
     def __len__(self):
         """Return the total number of samples."""
@@ -64,7 +90,7 @@ class CustomDataset(Dataset):
 # 2. LIGHTNINGMODULE DEFINITION
 # ============================================================================
 
-class MyModel(pl.LightningModule):
+class MyModel(LightningModuleBase):
     """PyTorch Lightning Module for training.
     
     This class encapsulates the model architecture, training logic,
@@ -86,6 +112,7 @@ class MyModel(pl.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5
     ):
+        _require_training_dependencies()
         super().__init__()
         
         # Save hyperparameters to self.hparams
@@ -255,7 +282,7 @@ class MyModel(pl.LightningModule):
 # 3. DATA MODULE (Optional but Recommended)
 # ============================================================================
 
-class MyDataModule(pl.LightningDataModule):
+class MyDataModule(LightningDataModuleBase):
     """PyTorch Lightning DataModule for organizing data loading.
     
     DataModules encapsulate all data loading logic in one place,
@@ -273,6 +300,7 @@ class MyDataModule(pl.LightningDataModule):
         batch_size: int = 32,
         num_workers: int = 4
     ):
+        _require_training_dependencies()
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
@@ -360,6 +388,7 @@ def setup_callbacks(checkpoint_dir='./checkpoints'):
     Returns:
         List of callback objects
     """
+    _require_training_dependencies()
     callbacks = [
         # Model checkpointing - saves best model based on validation loss
         ModelCheckpoint(
@@ -418,6 +447,8 @@ def train_model(
     Returns:
         Trained model
     """
+    _require_training_dependencies()
+
     # Create model if not provided
     if model is None:
         model = MyModel(
@@ -494,6 +525,8 @@ def run_inference(model_checkpoint_path, data_module):
     Returns:
         Predictions
     """
+    _require_training_dependencies()
+
     # Load model from checkpoint
     model = MyModel.load_from_checkpoint(model_checkpoint_path)
     
@@ -514,6 +547,8 @@ def run_inference(model_checkpoint_path, data_module):
 # ============================================================================
 
 if __name__ == '__main__':
+    _require_training_dependencies()
+
     # Set seed for reproducibility
     pl.seed_everything(42)
     

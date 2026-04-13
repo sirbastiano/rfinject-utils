@@ -47,24 +47,40 @@ pdm install -G docs</code></pre>
 
         <section class="card" id="quick-run">
           <h2 class="section-title">2) Inspect a burst group</h2>
-          <pre><code>import zarr
-
-from rfinject.utils import (
+          <pre><code>from rfinject import (
+  DEFAULT_HF_BUCKET_ID,
+  access_attributes,
   explore_zarr_structure,
   get_burst_info,
-  access_attributes,
+  open_hf_bucket_zarr,
 )
 
-zarr_data = zarr.open("path/to/your/data.zarr", mode="r")
+zarr_data = open_hf_bucket_zarr(
+  DEFAULT_HF_BUCKET_ID,
+  "s1a-iw-raw-s-hh-20240116t204634-20240116t204707-052137-064d52.zarr",
+  metadata_only=True,
+)
 explore_zarr_structure(zarr_data, max_depth=3)
 burst_info = get_burst_info(zarr_data)
 attrs = access_attributes(zarr_data, "burst_0")</code></pre>
         </section>
 
         <section class="card">
-          <h2 class="section-title">3) Download a sample dataset</h2>
-          <pre><code>hf download RFInject/v1 --repo-type dataset --max-workers 64 --local-dir /path/to/folder
-7z x -r -y /path/to/folder/RFInject.zip</code></pre>
+          <h2 class="section-title">3) Browse or mirror the bucket</h2>
+          <pre><code>from rfinject import (
+  DEFAULT_HF_BUCKET_ID,
+  download_hf_bucket_path,
+  list_hf_bucket_zarrs,
+)
+
+products = list_hf_bucket_zarrs(DEFAULT_HF_BUCKET_ID, limit=3)
+print(products)
+
+download_hf_bucket_path(
+  DEFAULT_HF_BUCKET_ID,
+  products[0],
+  "/path/to/folder",
+)</code></pre>
         </section>
 
         <section class="card" id="next">

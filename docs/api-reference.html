@@ -37,6 +37,51 @@
           <h2 class="section-title">rfinject.utils</h2>
           <div class="api-grid">
             <article class="api-item">
+              <h3>parse_hf_bucket_reference(bucket)</h3>
+              <p>Normalizes Hugging Face bucket references to <code>owner/name</code> format.</p>
+              <ul class="param-list">
+                <li><span class="param-name">bucket</span>: Bucket ID, prefixed path, or public bucket URL.</li>
+              </ul>
+              <p class="muted">Returns: normalized bucket ID string.</p>
+            </article>
+            <article class="api-item">
+              <h3>get_hf_bucket_info(bucket=DEFAULT_HF_BUCKET_ID)</h3>
+              <p>Fetches high-level bucket metadata such as size, visibility, and total file count.</p>
+              <ul class="param-list">
+                <li><span class="param-name">bucket</span>: Bucket ID or URL. Defaults to the RFInject L0 bucket.</li>
+              </ul>
+              <p class="muted">Returns: Hugging Face bucket info object.</p>
+            </article>
+            <article class="api-item">
+              <h3>list_hf_bucket_zarrs(bucket=DEFAULT_HF_BUCKET_ID, limit=None)</h3>
+              <p>Lists top-level <code>.zarr</code> products available in a bucket without walking every file recursively.</p>
+              <ul class="param-list">
+                <li><span class="param-name">bucket</span>: Bucket ID or URL.</li>
+                <li><span class="param-name">limit</span>: Optional maximum number of product paths to return.</li>
+              </ul>
+              <p class="muted">Returns: list of bucket-relative Zarr paths.</p>
+            </article>
+            <article class="api-item">
+              <h3>download_hf_bucket_path(bucket, remote_path, local_dir)</h3>
+              <p>Mirrors a single file or a recursive prefix from a bucket to the local filesystem.</p>
+              <ul class="param-list">
+                <li><span class="param-name">bucket</span>: Bucket ID or URL.</li>
+                <li><span class="param-name">remote_path</span>: File path or directory-like prefix inside the bucket.</li>
+                <li><span class="param-name">local_dir</span>: Destination root for the mirrored files.</li>
+              </ul>
+              <p class="muted">Returns: list of local file paths downloaded for the request.</p>
+            </article>
+            <article class="api-item">
+              <h3>open_hf_bucket_zarr(bucket, zarr_path, metadata_only=True)</h3>
+              <p>Downloads the required Zarr files from a bucket to a local mirror and opens the result with Zarr.</p>
+              <ul class="param-list">
+                <li><span class="param-name">bucket</span>: Bucket ID or URL.</li>
+                <li><span class="param-name">zarr_path</span>: Bucket-relative path to the product root ending in <code>.zarr</code>.</li>
+                <li><span class="param-name">metadata_only</span>: If true, syncs only <code>zarr.json</code> files for fast hierarchy inspection.</li>
+              </ul>
+              <p class="muted">Returns: opened <code>zarr.Group</code> backed by the local mirror.</p>
+            </article>
+            <article class="api-item">
               <h3>explore_zarr_structure(zarr_group, max_depth=3)</h3>
               <p>Walks a Zarr hierarchy recursively and prints each subgroup and array with shape/type metadata.</p>
               <ul class="param-list">
@@ -168,11 +213,19 @@
 
         <section class="card">
           <h2 class="section-title">Example call</h2>
-          <pre><code>from rfinject.utils import access_attributes, get_burst_info
+          <pre><code>from rfinject import (
+  DEFAULT_HF_BUCKET_ID,
+  access_attributes,
+  get_burst_info,
+  list_hf_bucket_zarrs,
+  open_hf_bucket_zarr,
+)
 
+products = list_hf_bucket_zarrs(DEFAULT_HF_BUCKET_ID, limit=1)
+zarr_data = open_hf_bucket_zarr(DEFAULT_HF_BUCKET_ID, products[0], metadata_only=True)
 burst_info = get_burst_info(zarr_data)
 metadata = access_attributes(zarr_data, "burst_0/echo")
-print(len(burst_info), list(metadata.keys())[:5])</code></pre>
+print(products[0], len(burst_info), list(metadata.keys())[:5])</code></pre>
         </section>
       </main>
 
