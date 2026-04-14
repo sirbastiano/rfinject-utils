@@ -45,9 +45,9 @@ def plot_complex_array(array: np.ndarray, title: str = 'Complex Array Visualizat
     plt.show()
 
 
-def plot_magnitude(array: np.ndarray, title: str = 'Magnitude', figsize: Tuple[int, int] = (10, 8), 
+def plot_magnitude(array: np.ndarray, title: str = 'Magnitude', figsize: Tuple[int, int] = (14, 12), 
                     normalize: bool = True, db_scale: bool = True, vmin: Optional[float] = None, 
-                    vmax: Optional[float] = None, savefig: Optional[str] = None) -> None:
+                    vmax: Optional[float] = None, savefig: Optional[str] = None, cmap: str = 'inferno') -> None:
     """Plot only the magnitude of a complex array with normalization and dB scale options.
     
     Args:
@@ -73,12 +73,13 @@ def plot_magnitude(array: np.ndarray, title: str = 'Magnitude', figsize: Tuple[i
         scale_label = 'Magnitude'
     
     fig, ax = plt.subplots(figsize=figsize)
-    im = ax.imshow(magnitude, cmap='gray', aspect='auto', vmin=vmin, vmax=vmax)
+    im = ax.imshow(magnitude, cmap=cmap, aspect='equal', vmin=vmin, vmax=vmax)
     ax.set_title(title)
     ax.set_xlabel('Range')
     ax.set_ylabel('Azimuth')
-    cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label(scale_label)
+    cbar = plt.colorbar(im, ax=ax, fraction=0.02, pad=0.04, orientation='horizontal', location='bottom')
+    cbar.set_label(scale_label, fontsize=8)
+    cbar.ax.tick_params(labelsize=7)
     plt.tight_layout()
     
     if savefig is not None:

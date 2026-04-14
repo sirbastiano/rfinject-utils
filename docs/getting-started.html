@@ -31,22 +31,49 @@
           <p class="eyebrow">Getting started</p>
           <h1>From zero to a first RFInject workflow</h1>
           <p>
-            This page includes the shortest practical path for local setup and first exploratory runs with your Zarr
-            datasets.
+            This page includes the shortest practical path for local setup and first exploratory runs with burst-based
+            SAR products stored as Zarr.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">1) Understand the data model</h2>
+          <p>
+            <strong>SAR</strong> products in RFInject are organized as bursts. Each burst is a compact acquisition unit
+            that can be inspected, sampled, visualized, and evaluated independently.
+          </p>
+          <p>
+            <strong>Zarr</strong> stores those bursts as hierarchical, chunked arrays with nearby metadata. That lets
+            you inspect structure first, then download only the payload chunks you need.
           </p>
         </section>
 
         <section class="card" id="install">
-          <h2 class="section-title">1) Install dependencies</h2>
+          <h2 class="section-title">2) Install dependencies</h2>
+          <p><strong>PDM</strong></p>
           <pre><code>curl -sSL https://pdm-project.org/install-pdm.py | python3 -
 pdm install
-pdm install -G jupyter_env
-pdm install -G viz
-pdm install -G docs</code></pre>
+pdm install -G jupyter_env -G viz -G docs
+pdm run python -m pip install torch</code></pre>
+          <p><strong>virtualenv</strong></p>
+          <pre><code>python3 -m pip install --user virtualenv
+python3 -m virtualenv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[jupyter_env,viz,docs]"
+python -m pip install torch</code></pre>
+          <p><strong>uv</strong></p>
+          <pre><code>curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --extra jupyter_env --extra viz --extra docs
+uv pip install --python .venv/bin/python torch</code></pre>
+          <p class="muted">
+            Register the matching Jupyter kernel after install so your notebook server and dependencies point to the
+            same environment.
+          </p>
         </section>
 
         <section class="card" id="quick-run">
-          <h2 class="section-title">2) Inspect a burst group</h2>
+          <h2 class="section-title">3) Inspect a burst group</h2>
           <pre><code>from rfinject import (
   DEFAULT_HF_BUCKET_ID,
   access_attributes,
@@ -66,7 +93,7 @@ attrs = access_attributes(zarr_data, "burst_0")</code></pre>
         </section>
 
         <section class="card">
-          <h2 class="section-title">3) Browse or mirror the bucket</h2>
+          <h2 class="section-title">4) Browse or mirror the bucket</h2>
           <pre><code>from rfinject import (
   DEFAULT_HF_BUCKET_ID,
   download_hf_bucket_path,
@@ -83,8 +110,24 @@ download_hf_bucket_path(
 )</code></pre>
         </section>
 
+        <section class="card">
+          <h2 class="section-title">5) Open the notebooks</h2>
+          <pre><code>notebooks/how_to_start.ipynb
+notebooks/how_to_pytorch_dataloader.ipynb
+notebooks/rfi_iou_evaluation.ipynb</code></pre>
+          <p>
+            The PyTorch dataloader notebook now mirrors the selected train, validation, and test burst subset under
+            <code>./data</code> before iteration, then reads from that local mirror.
+          </p>
+          <p class="muted">
+            Start with a small <code>sample_fraction</code> such as <code>0.001</code> or set
+            <code>max_scenes_per_split</code> for a smoke run. Even a small fraction of a large raw scene can still
+            translate into several GiB of local data.
+          </p>
+        </section>
+
         <section class="card" id="next">
-          <h2 class="section-title">4) Run your first script</h2>
+          <h2 class="section-title">6) Run your first script</h2>
           <p>Store helper code in a small Python script and run with PDM to keep the environment locked.</p>
           <pre><code>pdm run python your_script.py</code></pre>
           <p class="muted">Need full API details? Go to <a href="./api-reference.html">API reference</a>.</p>
